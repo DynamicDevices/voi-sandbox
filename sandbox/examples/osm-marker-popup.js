@@ -1,6 +1,6 @@
 var map;
 function init() {
-    
+
     // The overlay layer for our marker, with a simple diamond as symbol
     var overlay = new OpenLayers.Layer.Vector('Overlay', {
         styleMap: new OpenLayers.StyleMap({
