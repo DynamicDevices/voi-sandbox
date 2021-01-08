@@ -4,8 +4,6 @@ var overlay;
 // when jQuery has loaded the data, we can create features for each photo
 function successHandler(data) {
 
-  alert ("1")
-
   // we need to transform the geometries into the view's projection
 //  var transform = ol.proj.getTransform('EPSG:4326', 'EPSG:3857');
 
