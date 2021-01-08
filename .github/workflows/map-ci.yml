@@ -17,7 +17,7 @@ jobs:
       - name: Map Build
         run: |
           mkdir -v -p build/map
-          cp sandbox/* build/map
+          cp -r sandbox/* build/map
       - name: Upload Artifact
         uses: actions/upload-artifact@v1
         with:
