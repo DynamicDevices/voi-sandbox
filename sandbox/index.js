@@ -7,8 +7,12 @@ function successHandler(data) {
   // we need to transform the geometries into the view's projection
 //  var transform = ol.proj.getTransform('EPSG:4326', 'EPSG:3857');
 
+  console.debug("starting");
+
   // loop over the items in the response
   data.forEach(function(item) {
+
+    console.debug(item);
 
     // create a new feature with the item as the properties
     var feature = new OpenLayers.Feature(item);
