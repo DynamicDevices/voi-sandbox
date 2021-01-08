@@ -81,4 +81,25 @@ function init() {
       complete: function () {
       }
     });
+
+    // pull json for Scotland
+    $.ajax({
+      url: 'resources/Scotland_Oct2020_open_latlon.json',
+      success: successHandler,
+      error: function () {
+        alert("Error retrieving Scotland data");
+      },
+      complete: function () {
+      }
+    });
+    // pull json for England
+    $.ajax({
+      url: 'resources/England_2018_2019_latlon.json',
+      success: successHandler,
+      error: function () {
+        alert("Error retrieving England data");
+      },
+      complete: function () {
+      }
+    });
 }
