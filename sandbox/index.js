@@ -24,8 +24,16 @@ function successHandler(data) {
 
     console.debug(myLocation);
 
+    var tiptext = ""
+    if( "SCHNAME" in item )
+      tiptext = item.SCHNAME;
+    else if( "Institution Name" in item )
+      tiptext = item["Institution Name"];
+    else if( "School Name" in item )
+      tiptext = item["School Name"];
+
     overlay.addFeatures([
-        new OpenLayers.Feature.Vector(myLocation, {tooltip: "School"})
+        new OpenLayers.Feature.Vector(myLocation, {tooltip: tiptext})
     ]);
 
 
@@ -69,7 +77,7 @@ function init() {
     });
 
     // and add the popup to it.
-    map.addPopup(popup);
+//    map.addPopup(popup);
 
     // pull json for NI
     $.ajax({
