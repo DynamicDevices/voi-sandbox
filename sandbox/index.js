@@ -9,8 +9,6 @@ function successHandler(data) {
   // we need to transform the geometries into the view's projection
 //  var transform = ol.proj.getTransform('EPSG:4326', 'EPSG:3857');
 
-  console.debug("starting");
-
   // loop over the items in the response
   data.forEach(function(item) {
 
@@ -20,12 +18,14 @@ function successHandler(data) {
 //    feature.set('url', item.media.m);
     // create an appropriate geometry and add it to the feature
 
+    console.debug(item)
+
     var myLocation = new OpenLayers.Geometry.Point(parseFloat(item.LON), parseFloat(item.LAT)).transform('EPSG:4326', 'EPSG:3857');
 
     console.debug(myLocation);
 
     overlay.addFeatures([
-        new OpenLayers.Feature.Vector(myLocation, {tooltip: 'OpenLayers'})
+        new OpenLayers.Feature.Vector(myLocation, {tooltip: "School"})
     ]);
 
 
@@ -71,17 +71,14 @@ function init() {
     // and add the popup to it.
     map.addPopup(popup);
 
-    // pull json
+    // pull json for NI
     $.ajax({
       url: 'resources/Northern_Ireland_Jan2021_latlon.json',
-//      dataType: 'jsonp',
-//      jsonpCallback: 'jsonFlickrFeed',
       success: successHandler,
       error: function () {
-        alert("error");
+        alert("Error retrieving NI data");
       },
       complete: function () {
-        alert("ajax completed ");
       }
     });
 }
