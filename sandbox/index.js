@@ -32,7 +32,7 @@ function init() {
     map = new OpenLayers.Map({
         div: "map", projection: "EPSG:3857",
         layers: [new OpenLayers.Layer.OSM(), overlay],
-        center: myLocation.getBounds().getCenterLonLat(), zoom: 10
+        center: myLocation.getBounds().getCenterLonLat(), zoom: 6
     });
     // and add the popup to it.
     map.addPopup(popup);
