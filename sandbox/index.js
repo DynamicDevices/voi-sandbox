@@ -61,7 +61,7 @@ function init() {
 
     // pull json
     $.ajax({
-      url: 'https://raw.githubusercontent.com/Digital-Access-National-Network/website/master/data/schools/England_2018_2019_latlon.json',
+      url: 'resources/Northern_Ireland_Jan2021_latlon.json',
       dataType: 'jsonp',
       jsonpCallback: 'jsonFlickrFeed',
       success: successHandler
