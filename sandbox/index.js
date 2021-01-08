@@ -1,3 +1,5 @@
+    console.debug(item);
+
 var map;
 var overlay;
 
@@ -12,15 +14,15 @@ function successHandler(data) {
   // loop over the items in the response
   data.forEach(function(item) {
 
-    console.debug(item);
-
     // create a new feature with the item as the properties
     var feature = new OpenLayers.Feature(item);
     // add a url property for later ease of access
 //    feature.set('url', item.media.m);
     // create an appropriate geometry and add it to the feature
 
-    var myLocation = new OpenLayers.Geometry.Point(parseFloat(item.lon), parseFloat(item.lat)).transform('EPSG:4326', 'EPSG:3857');
+    var myLocation = new OpenLayers.Geometry.Point(parseFloat(item.LON), parseFloat(item.LAT)).transform('EPSG:4326', 'EPSG:3857');
+
+    console.debug(myLocation);
 
     overlay.addFeatures([
         new OpenLayers.Feature.Vector(myLocation, {tooltip: 'OpenLayers'})
