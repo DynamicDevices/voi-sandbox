@@ -20,6 +20,7 @@ with open(csvFilePath) as csvFile:
         row["LON"] = p.lon
       except:
         pass
+    jsonData.append(row)
   print("\n")
 
 with open(jsonFilePath, 'w', encoding='ascii') as jsonf:
