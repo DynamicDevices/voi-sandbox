@@ -18,7 +18,7 @@ function successHandler(data) {
 //    feature.set('url', item.media.m);
     // create an appropriate geometry and add it to the feature
 
-    console.debug(item)
+//    console.debug(item)
 
     var myLocation = new OpenLayers.Geometry.Point(parseFloat(item.LON), parseFloat(item.LAT)).transform('EPSG:4326', 'EPSG:3857');
 
