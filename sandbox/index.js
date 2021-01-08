@@ -12,7 +12,7 @@ function init() {
 
     // The location of our marker and popup. We usually think in geographic
     // coordinates ('EPSG:4326'), but the map is projected ('EPSG:3857').
-    var myLocation = new OpenLayers.Geometry.Point(150.9162742, -33.921468)
+    var myLocation = new OpenLayers.Geometry.Point(-2.986221, 53.413420)
         .transform('EPSG:4326', 'EPSG:3857');
 
     // We add the marker with a tooltip text to the overlay
@@ -32,7 +32,7 @@ function init() {
     map = new OpenLayers.Map({
         div: "map", projection: "EPSG:3857",
         layers: [new OpenLayers.Layer.OSM(), overlay],
-        center: myLocation.getBounds().getCenterLonLat(), zoom: 15
+        center: myLocation.getBounds().getCenterLonLat(), zoom: 10
     });
     // and add the popup to it.
     map.addPopup(popup);
