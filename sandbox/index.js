@@ -8,18 +8,16 @@ var _englandSchoolData;
 var _homeLocation;
 var _maxDistanceMiles = 20;
 
-var _geographicProj  = new OpenLayers.Projection("EPSG:4326");
-var _mapProj  = new OpenLayers.Projection("EPSG:3857");
-var _mercatorProj = new OpenLayers.Projection("EPSG:900913");
+var _geographicProj  = new ol.proj.Projection("EPSG:4326");
+var _mapProj  = new ol.proj.Projection("EPSG:3857");
+var _mercatorProj = new ol.proj.Projection("EPSG:900913");
 
 // Find distance between two points on the map
 //
 // TODO: I am not convinced that this is giving the right distances...
 //
-function distanceBetweenPointsMiles(p1Map, p2Map){
-  var p1Merc = p1Map.transform(_mapProj, _mercatorProj);
-  var p2Merc = p2Map.transform(_mapProj, _mercatorProj);
-  return p1Merc.distanceTo(p2Merc) * 0.000621371;
+function distanceBetweenPointsMiles(p1, p2){
+  return ol.sphere.getDistance(p1, p2) * 0.000621371;
 }
 
 // when jQuery has loaded the data, we can create features for each photo
@@ -34,17 +32,16 @@ function jsonSuccessHandler(data) {
   data.forEach(function(item) {
 
     // create a new feature with the item as the properties
-    var feature = new OpenLayers.Feature(item);
+    var feature = new ol.Feature(item);
     // add a url property for later ease of access
 //    feature.set('url', item.media.m);
     // create an appropriate geometry and add it to the feature
 
 //    console.debug(item)
 
-    var thisLocation = new OpenLayers.Geometry.Point(parseFloat(item.LON), parseFloat(item.LAT)).transform('EPSG:4326', 'EPSG:3857');
+    var distanceMiles = distanceBetweenPointsMiles(_homeLocation, [ item.LON, item.LAT] );
 
-//    console.debug(thisLocation);
-    var distanceMiles = distanceBetweenPointsMiles(_homeLocation, thisLocation);
+//    console.debug(distanceMiles);
 
     if(distanceMiles < _maxDistanceMiles) {
       var tiptext = ""
@@ -57,9 +54,11 @@ function jsonSuccessHandler(data) {
 
       tiptext = tiptext + " " + distanceMiles;
 
-      _overlay.addFeatures([
-          new OpenLayers.Feature.Vector(thisLocation, {tooltip: tiptext})
-      ]);
+      var marker = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.transform([item.LON, item.LAT], 'EPSG:4326', 'EPSG:3857')),
+      });
+
+      _overlay.getSource().addFeature(marker);
     }
 
   });
@@ -67,19 +66,26 @@ function jsonSuccessHandler(data) {
 
 function updateFeatures() {
 
-    // The overlay layer for our marker, with a simple diamond as symbol
-    _overlay = new OpenLayers.Layer.Vector('Overlay', {
-        styleMap: new OpenLayers.StyleMap({
-            externalGraphic: 'img/marker.png',
-            graphicWidth: 20, graphicHeight: 24, graphicYOffset: -24,
-            title: '${tooltip}'
-        })
-    });
-
     // We add the marker with a tooltip text to the overlay
-    _overlay.addFeatures([
-        new OpenLayers.Feature.Vector(_homeLocation, {tooltip: 'You are here'})
-    ]);
+    var homeFeature = new ol.Feature(
+	ol.proj.transform(_homeLocation, 'EPSG:4326', 'EPSG:3857'),
+	{tooltip: 'You are here'}
+    );
+
+    // The overlay layer for our marker, with a simple diamond as symbol
+    _overlay = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [homeFeature]
+      }),
+      style: new ol.style.Style({
+        image: new ol.style.Icon({
+          anchor: [0.5, 46],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'pixels',
+          src: 'img/marker.png'
+        })
+      })
+    })
 
     // TODO: Are these resources cached? Hope so...
 
@@ -123,17 +129,52 @@ function updateFeatures() {
 
 function initMap() {
 
-    // The location of our marker and popup. We usually think in geographic
-    // coordinates ('EPSG:4326'), but the map is projected ('EPSG:3857').
-    _homeLocation = new OpenLayers.Geometry.Point(-2.986221, 53.413420)
-        .transform('EPSG:4326', 'EPSG:3857');
+    // The location of our marker and popup. Coordinates ('EPSG:4326')
+    _homeLocation = [-2.986221, 53.413420];
 
     // Create the map
-    _map = new OpenLayers.Map({
-        div: "map", projection: "EPSG:3857",
-        layers: [new OpenLayers.Layer.OSM()],
-        center: _homeLocation.getBounds().getCenterLonLat(), zoom: 6
+    _map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM()
+          })
+        ],
+        view: new ol.View({
+          projection: "EPSG:3857",
+          center: ol.proj.fromLonLat(_homeLocation),
+          zoom: 6
+        })
     });
+
+    var geocoder = new Geocoder('nominatim', {
+      provider: 'osm', //change it here
+      lang: 'en-GB',
+      placeholder: 'Search for ...',
+      targetType: 'text-input',
+      limit: 5,
+      keepOpen: true,
+      preventDefault: true
+    });
+
+    _map.addControl(geocoder);
+
+    geocoder.on('addresschosen', function(evt){
+
+      var feature = evt.feature,
+        coord = evt.coordinate,
+        address = evt.address;
+
+      // Clear current features
+      _map.removeLayer(_overlay);
+
+      _map.getView().setCenter(coord);
+
+      // Coordinates are in map projection so transform back to 4326 for home
+      _homeLocation = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326')
+
+      updateFeatures();
+    })
 
     updateFeatures();
 }
@@ -153,8 +194,10 @@ $(document).ready(function(){
 
     // Set new max distance
     _maxDistanceMiles = parseInt(this.value);
+
     // Clear current features
     _map.removeLayer(_overlay);
+
     // Update them...
     updateFeatures();
   });
