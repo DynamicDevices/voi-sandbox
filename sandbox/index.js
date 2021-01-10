@@ -20,6 +20,36 @@ function distanceBetweenPointsMiles(p1, p2){
   return ol.sphere.getDistance(p1, p2) * 0.000621371;
 }
 
+function styleFunction(feature, resolution) {
+  return [
+    new ol.style.Style({
+        fill: new ol.style.Fill({
+        color: 'rgba(255,255,255,0.4)'
+      }),
+      stroke: new ol.style.Stroke({
+        color: '#3399CC',
+        width: 1.25
+      }),
+      text: new ol.style.Text({
+        font: '14px Calibri,sans-serif',
+        fill: new ol.style.Fill({ color: '#000' }),
+        stroke: new ol.style.Stroke({
+          color: '#fff', width: 2
+        }),
+        // get the text from the feature - `this` is ol.Feature
+        // and show only under certain resolution
+        text: (_map.getView().getZoom() > 14) || (feature.get('hover') == true) ? feature.get('name') : ''
+      }),
+      image: new ol.style.Icon({
+        anchor: [0.5, 46],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'pixels',
+        src: 'img/marker.png'
+      })
+    })
+  ];
+}
+
 // when jQuery has loaded the data, we can create features for each photo
 function jsonSuccessHandler(data) {
 
@@ -52,11 +82,15 @@ function jsonSuccessHandler(data) {
       else if( "School Name" in item )
         tiptext = item["School Name"];
 
-      tiptext = tiptext + " " + distanceMiles;
+//      tiptext = tiptext + " " + distanceMiles;
+      tiptext = tiptext;
 
       var marker = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.transform([item.LON, item.LAT], 'EPSG:4326', 'EPSG:3857')),
+        name: tiptext
       });
+
+      marker.setStyle(styleFunction);
 
       _overlay.getSource().addFeature(marker);
     }
@@ -86,8 +120,6 @@ function updateFeatures() {
         })
       })
     })
-
-    // TODO: Are these resources cached? Hope so...
 
     // pull json for NI
     $.ajax({
@@ -127,6 +159,25 @@ function updateFeatures() {
     });
 }
 
+var _highlighted;
+
+var displayFeatureInfo = function (pixel) {
+    _overlay.getFeatures(pixel).then(function (features) {
+    var feature = features.length ? features[0] : undefined;
+    if (features.length) {
+      feature.set('hover',true);
+      feature.setStyle(styleFunction);
+      _highlighted = feature;
+    } else {
+      if(_highlighted != null) {
+        _highlighted.set('hover',false);
+        _highlighted.setStyle(styleFunction);
+      }
+      _highlighted = null;
+    }
+  });
+}
+
 function initMap() {
 
     // The location of our marker and popup. Coordinates ('EPSG:4326')
@@ -145,6 +196,14 @@ function initMap() {
           center: ol.proj.fromLonLat(_homeLocation),
           zoom: 6
         })
+    });
+
+    _map.on('pointermove', function (evt) {
+      if (evt.dragging) {
+      return;
+      }
+      var pixel = _map.getEventPixel(evt.originalEvent);
+      displayFeatureInfo(pixel);
     });
 
     var geocoder = new Geocoder('nominatim', {
