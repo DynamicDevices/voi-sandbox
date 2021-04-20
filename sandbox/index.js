@@ -44,7 +44,7 @@ function styleFunction(feature, resolution) {
         anchor: [0.5, 46],
         anchorXUnits: 'fraction',
         anchorYUnits: 'pixels',
-        src: 'img/marker.png'
+        src: (feature.get('battery') > 66 ? 'img/marker-green.png' : ( feature.get('battery') > 33 ? 'img/marker-gold.png' : 'img/marker.png') )
       })
     })
   ];
@@ -58,8 +58,11 @@ function jsonSuccessHandler(data) {
   // we need to transform the geometries into the view's projection
 //  var transform = ol.proj.getTransform('EPSG:4326', 'EPSG:3857');
 
+  // DEBUG - Scooter format
+  vehicles = data['vehicle_groups'][0]['vehicles'];
+
   // loop over the items in the response
-  data.forEach(function(item) {
+  vehicles.forEach(function(item) {
 
     // create a new feature with the item as the properties
     var feature = new ol.Feature(item);
@@ -67,28 +70,40 @@ function jsonSuccessHandler(data) {
 //    feature.set('url', item.media.m);
     // create an appropriate geometry and add it to the feature
 
-//    console.debug(item)
+////    console.debug(item)
 
-    var distanceMiles = distanceBetweenPointsMiles(_homeLocation, [ item.LON, item.LAT] );
+//	{
+//          "id": "d1690647-9b0b-4c9a-9c2e-4277570da9cf",
+//          "short": "slkp",
+//          "battery": 46,
+//          "location": {
+//            "lng": -2.919074535369873,
+//            "lat": 53.38707733154297
+//          },
+//          "zone_id": "210",
+//          "category": "scooter"
+//        },
+
+    var lon = item['location']['lng'];
+    var lat = item['location']['lat'];
+    var battery = item['battery'];
+
+//    console.debug(battery);
+
+//    console.debug(lon + "," + lat);
+
+    var distanceMiles = distanceBetweenPointsMiles(_homeLocation, [ lon, lat ] );
 
 //    console.debug(distanceMiles);
 
     if(distanceMiles < _maxDistanceMiles) {
-      var tiptext = ""
-      if( "SCHNAME" in item )
-        tiptext = item.SCHNAME;
-      else if( "Institution Name" in item )
-        tiptext = item["Institution Name"];
-      else if( "School Name" in item )
-        tiptext = item["School Name"];
-
-//      tiptext = tiptext + " " + distanceMiles;
-      tiptext = tiptext;
+      var tiptext = item['id']
 
       var marker = new ol.Feature({
-        geometry: new ol.geom.Point(ol.proj.transform([item.LON, item.LAT], 'EPSG:4326', 'EPSG:3857')),
+        geometry: new ol.geom.Point(ol.proj.transform([lon,lat], 'EPSG:4326', 'EPSG:3857')),
         name: tiptext
       });
+      marker.set('battery', battery);
 
       marker.setStyle(styleFunction);
 
@@ -121,42 +136,19 @@ function updateFeatures() {
       })
     })
 
-    // pull json for NI
+    // pull json for Liverpool
     $.ajax({
-      url: 'resources/Northern_Ireland_Jan2021_latlon.json',
+      url: 'resources/LivScooter-20210420-2100_latlon.json',
       success: jsonSuccessHandler,
-      indexValue: { target:_niSchoolData },
+      indexValue: { target:_englandSchoolData },
       error: function () {
-        alert("Error retrieving NI data");
+        alert("Error retrieving Scooter data");
       },
       complete: function () {
       }
     });
 
     _map.addLayer(_overlay);
-
-    // pull json for Scotland
-    $.ajax({
-      url: 'resources/Scotland_Oct2020_open_latlon.json',
-      success: jsonSuccessHandler,
-      indexValue: { target:_scotlandSchoolData },
-      error: function () {
-        alert("Error retrieving Scotland data");
-      },
-      complete: function () {
-      }
-    });
-    // pull json for England
-    $.ajax({
-      url: 'resources/England_2018_2019_latlon.json',
-      success: jsonSuccessHandler,
-      indexValue: { target:_englandSchoolData },
-      error: function () {
-        alert("Error retrieving England data");
-      },
-      complete: function () {
-      }
-    });
 }
 
 var _highlighted;
@@ -198,13 +190,13 @@ function initMap() {
         })
     });
 
-    _map.on('pointermove', function (evt) {
-      if (evt.dragging) {
-      return;
-      }
-      var pixel = _map.getEventPixel(evt.originalEvent);
-      displayFeatureInfo(pixel);
-    });
+//    _map.on('pointermove', function (evt) {
+//     if (evt.dragging) {
+//      return;
+//      }
+//      var pixel = _map.getEventPixel(evt.originalEvent);
+//      displayFeatureInfo(pixel);
+//    });
 
     var geocoder = new Geocoder('nominatim', {
       provider: 'osm', //change it here
@@ -242,7 +234,7 @@ function initMap() {
 $(document).ready(function(){
 
   // Setup distance combo
-  var data = { '1': '1m', '5': '5m', '10': '10m', '25': '25m'};
+  var data = { '1': '1m', '5': '5m', '10': '10m', '25': '25m', '100': '100m'};
   var s = $('<select id="combo" />');
         //iterate through each key/value in 'data' and create an option tag out of it
         for(var val in data) {
